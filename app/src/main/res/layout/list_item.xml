@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/itemLayout"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:gravity="center"
+    android:background="#ADD8E6"
+    android:orientation="horizontal"
+    android:padding="2sp">
+
+    <EditText
+        android:id="@+id/editTextItem"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:autofillHints=""
+        android:background="@null"
+        android:hint="@string/hint_text"
+        android:letterSpacing="0.07"
+        android:textColor="#401A1A"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <ImageButton
+        android:id="@+id/addButton"
+        android:layout_width="32dp"
+        android:layout_height="wrap_content"
+        android:background="?android:selectableItemBackground"
+        android:contentDescription="@string/add_item_description"
+        android:padding="7dp"
+        android:src="@drawable/add" />
+
+    <ImageButton
+        android:id="@+id/optionsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="7dp"
+        android:background="?android:selectableItemBackground"
+        android:contentDescription="@string/options_button"
+        android:src="@drawable/options" />
+
+    <ImageButton
+        android:id="@+id/importantButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="7dp"
+        android:background="?android:selectableItemBackground"
+        android:contentDescription="@string/important_button"
+        android:src="@drawable/important" />
+
+    <ImageButton
+        android:id="@+id/normalButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="7dp"
+        android:background="?android:selectableItemBackground"
+        android:contentDescription="@string/normal_button"
+        android:src="@drawable/normal" />
+
+    <ImageButton
+        android:id="@+id/unimportantButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="7dp"
+        android:background="?android:selectableItemBackground"
+        android:contentDescription="@string/unimportant_button"
+        android:src="@drawable/unimportant" />
+
+    <ImageButton
+        android:id="@+id/removeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="7dp"
+        android:background="?android:selectableItemBackground"
+        android:contentDescription="@string/remove_button"
+        android:src="@drawable/remove" />
+
+</LinearLayout>
