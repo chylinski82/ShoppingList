@@ -1,0 +1,18 @@
+<resources>
+    <!-- Normal items -->
+    <color name="color_normal_odd">#4B688B</color>
+    <color name="color_normal_even">#5C7A9B</color>
+
+    <!-- Important items -->
+    <color name="color_important_odd">#784F06</color>
+    <color name="color_important_even">#957039</color>
+
+    <!-- Unimportant items -->
+    <color name="color_unimportant_odd">#4B004B</color>
+    <color name="color_unimportant_even">#5C2062</color>
+
+    <!-- Text and Hint Colors -->
+    <color name="textColor">#FFFFFF</color> <!-- White -->
+    <color name="hintTextColor">#B0B0B0</color> <!-- Bleak shade of light gray -->
+
+</resources>

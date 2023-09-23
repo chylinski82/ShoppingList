@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">ShoppingList</string>
-    <string name="add_item_description">Add item button</string>
     <string name="hint_text">add item</string>
     <string name="options_button">Options button</string>
     <string name="important_button">Important button</string>
