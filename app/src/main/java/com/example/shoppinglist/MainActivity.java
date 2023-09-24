@@ -1,6 +1,8 @@
 package com.example.shoppinglist;
 
 import android.os.Bundle;
+import android.util.Log;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,7 +42,10 @@ public class MainActivity extends AppCompatActivity {
 
         // TODO: Initialize your data or load it from a source if needed
         // For now, adding a blank item as a starting point:
-        addItem();
+            // Check if activity is freshly created or recreated after configuration change.
+        if (savedInstanceState == null) {
+            addItem();
+        }
     }
 
     // Method to add a new item to the list
@@ -49,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         // For simplicity, using current time in milliseconds as ID (just an example)
         Item item = new Item(System.currentTimeMillis(), "");
         itemList.add(item);
+
         // Notify the adapter that a new item has been inserted to the list
         itemAdapter.notifyItemInserted(itemList.size() - 1);
 
@@ -60,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
             itemList.remove(position);
             // Notify the adapter that an item has been removed
             itemAdapter.notifyItemRemoved(position);
+
+            // Notify the RecyclerView to re-bind all subsequent items after the removed item.
+            itemAdapter.notifyItemRangeChanged(position, itemList.size() - position);
         }
     }
 

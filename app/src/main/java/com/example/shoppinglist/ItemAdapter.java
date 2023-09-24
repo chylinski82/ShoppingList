@@ -7,6 +7,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import androidx.annotation.NonNull;
@@ -51,6 +52,17 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         // Update the views inside the ViewHolder with the data from the item.
         holder.editTextItem.setText(item.getText());
 
+        // Handle focusing on the new entry.
+        if(item.isNewEntry()) {
+            holder.editTextItem.requestFocus();
+
+            // Open the keyboard.
+            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(holder.editTextItem, InputMethodManager.SHOW_IMPLICIT);
+            }
+
+        }
 
         // If the item has text, show the options and remove button.
         if (!item.getText().isEmpty()) {
@@ -78,7 +90,6 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         // Determine the color based on importance and position.
         switch (item.getImportance()) {
             case IMPORTANT:
-                // Choose between two colors based on position (odd/even).
                 colorRes = (position % 2 == 0) ? R.color.color_important_even : R.color.color_important_odd;
                 break;
             case UNIMPORTANT:
