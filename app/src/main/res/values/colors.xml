@@ -4,16 +4,16 @@
     <color name="white">#FFFFFFFF</color>
 
     <!-- Normal items -->
-    <color name="color_normal_odd">#4FC5EA</color> <!-- Example light blue shade -->
-    <color name="color_normal_even">#B2E0F0</color> <!-- A slightly different light blue shade -->
+    <color name="color_normal_odd">#87D5ED</color> <!-- Example light blue shade -->
+    <color name="color_normal_even">#5BCCEF</color> <!-- A slightly different light blue shade -->
 
     <!-- Important items -->
     <color name="color_important_odd">#FFA500</color> <!-- Example orange shade -->
-    <color name="color_important_even">#FFB640</color> <!-- A slightly different orange shade -->
+    <color name="color_important_even">#FBBA42</color> <!-- A slightly different orange shade -->
 
     <!-- Unimportant items -->
     <color name="color_unimportant_odd">#FF29FF</color> <!-- Example purple shade -->
-    <color name="color_unimportant_even">#DFAAE3</color> <!-- A slightly different purple shade -->
+    <color name="color_unimportant_even">#EA5DEA</color> <!-- A slightly different purple shade -->
 
     <!-- Text and Hint Colors for Light Mode -->
     <color name="textColor">#000000</color> <!-- Black for light theme -->

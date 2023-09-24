@@ -73,19 +73,25 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             holder.unimportantButton.setVisibility(View.GONE);
         }
 
-        // Change the background color based on importance.
+        int colorRes; // This will store the color resource ID.
+
+        // Determine the color based on importance and position.
         switch (item.getImportance()) {
             case IMPORTANT:
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.color_important_odd));
+                // Choose between two colors based on position (odd/even).
+                colorRes = (position % 2 == 0) ? R.color.color_important_even : R.color.color_important_odd;
                 break;
             case UNIMPORTANT:
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.color_unimportant_odd));
+                colorRes = (position % 2 == 0) ? R.color.color_unimportant_even : R.color.color_unimportant_odd;
                 break;
             case NORMAL:
             default:
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.color_normal_odd));
+                colorRes = (position % 2 == 0) ? R.color.color_normal_even : R.color.color_normal_odd;
                 break;
         }
+
+        // Set the background color for the item.
+        holder.itemView.setBackgroundColor(ContextCompat.getColor(context, colorRes));
     }
 
     // This method returns the size of the dataset.

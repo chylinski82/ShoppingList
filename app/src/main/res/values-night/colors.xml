@@ -1,7 +1,7 @@
 <resources>
     <!-- Normal items -->
-    <color name="color_normal_odd">#4B688B</color>
-    <color name="color_normal_even">#5C7A9B</color>
+    <color name="color_normal_odd">#104681</color>
+    <color name="color_normal_even">#3C5D81</color>
 
     <!-- Important items -->
     <color name="color_important_odd">#784F06</color>
