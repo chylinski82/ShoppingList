@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/itemLayout"
     android:layout_width="match_parent"
     android:layout_height="70dp"
@@ -31,7 +32,8 @@
         android:layout_height="match_parent"
         android:background="?android:selectableItemBackground"
         android:contentDescription="@string/options_button"
-        android:src="@drawable/options" />
+        android:src="@drawable/options"
+        app:tint="@color/textColor" />
 
     <ImageButton
         android:id="@+id/importantButton"
@@ -39,7 +41,8 @@
         android:layout_height="match_parent"
         android:background="?android:selectableItemBackground"
         android:contentDescription="@string/important_button"
-        android:src="@drawable/important" />
+        android:src="@drawable/important"
+        app:tint="@color/textColor" />
 
     <ImageButton
         android:id="@+id/normalButton"
@@ -47,7 +50,8 @@
         android:layout_height="match_parent"
         android:background="?android:selectableItemBackground"
         android:contentDescription="@string/normal_button"
-        android:src="@drawable/normal" />
+        android:src="@drawable/normal"
+        app:tint="@color/textColor" />
 
     <ImageButton
         android:id="@+id/unimportantButton"
@@ -55,7 +59,8 @@
         android:layout_height="match_parent"
         android:background="?android:selectableItemBackground"
         android:contentDescription="@string/unimportant_button"
-        android:src="@drawable/unimportant" />
+        android:src="@drawable/unimportant"
+        app:tint="@color/textColor" />
 
     <ImageButton
         android:id="@+id/removeButton"
@@ -63,6 +68,7 @@
         android:layout_height="match_parent"
         android:background="?android:selectableItemBackground"
         android:contentDescription="@string/remove_button"
-        android:src="@drawable/remove" />
+        android:src="@drawable/remove"
+        app:tint="@color/textColor" />
 
 </LinearLayout>

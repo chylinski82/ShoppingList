@@ -9,17 +9,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
-
-    // Reference to the RecyclerView UI component
-    private RecyclerView recyclerView;
+public class MainActivity extends AppCompatActivity implements ItemAdapter.OnItemRemoveListener, ItemAdapter.OnSortAndRefreshListener {
 
     // Adapter bridges the data and the RecyclerView,
     // determining how each individual item should be displayed.
-    private static ItemAdapter itemAdapter;
+    private ItemAdapter itemAdapter;
 
-    // A list to hold our shopping items
-    private static List<Item> itemList = new ArrayList<>();
+    // Master list to hold our shopping items. This is the primary data source for the entire application.
+    // Any changes to this list will reflect across components that have a reference to this list.
+    private final List<Item> itemList = new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +26,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Find the RecyclerView in the layout
-        recyclerView = findViewById(R.id.recyclerView);
+        // Reference to the RecyclerView UI component
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
         // Setting up RecyclerView with a linear layout manager
         // The LayoutManager dictates the manner in which items are arranged on the screen
@@ -38,6 +38,10 @@ public class MainActivity extends AppCompatActivity {
         // Initialize with the current list of items
         // Initialize with empty list for now
         itemAdapter = new ItemAdapter(this, itemList);
+        // Set the listeners for the adapter
+        itemAdapter.setOnItemRemoveListener(this);
+        itemAdapter.setOnSortAndRefreshListener(this);
+
         recyclerView.setAdapter(itemAdapter);
 
         // TODO: Initialize your data or load it from a source if needed
@@ -82,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Static method to sort items by their importance level
-    public static void sortAndRefreshList() {
+    public void sortAndRefreshList() {
         itemList.sort((item1, item2) -> {
             // Place empty item at the bottom.
             if (item1.getText().isEmpty()) return 1;
@@ -94,6 +98,20 @@ public class MainActivity extends AppCompatActivity {
         // Notify the adapter that the dataset has changed
         // This will force all items to be redrawn
         itemAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onItemRemove(int position) {
+        // Callback method triggered when an item is set to be removed via the adapter's interface.
+        // Delegates the actual removal logic to the removeItem method.
+        removeItem(position);
+    }
+
+    @Override
+    // Callback method triggered when the list is set to be sorted via the adapter's interface.
+    // Delegates the actual sorting logic to the sortAndRefreshList method.
+    public void onSortAndRefresh() {
+        sortAndRefreshList();
     }
 
 }
