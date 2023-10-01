@@ -12,6 +12,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
 import java.util.List;
 
 // This class is an adapter for the RecyclerView to display a list of items.
@@ -21,43 +23,84 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     // Reference to the list of items that the adapter will display in the RecyclerView.
     // This is not a separate list, but a reference to the master list from MainActivity.
     // Therefore, any changes made here will also affect the itemList in MainActivity.
-    private final List<Item> items;
+    private List<Item> itemsList;
 
     // Context is used for various Android framework operations, like inflating views.
     // Context is an Android concept; it's a handle to the system which allows
     // operations like accessing resources, launching activities, and so on.
     private final Context context;
 
-    // Define an interface for item removal callback
-    public interface OnItemRemoveListener {
+    // Define a unified interface to handle various item actions.
+    // Implement this interface in the activity or fragment to listen to item-related events.
+    public interface ItemActionListener {
+         // Callback for when an item is to be removed.
+         // @param position: The position of the item to be removed.
         void onItemRemove(int position);
-    }
 
-    // Instance of the listener that will be set by the activity or fragment
-    private OnItemRemoveListener removalListener;
 
-    // Set the listener that will be called when an item is to be removed.
-    public void setOnItemRemoveListener(OnItemRemoveListener listener) {
-        this.removalListener = listener;
-    }
-
-    // Define an interface for items sort and refresh callback
-    public interface OnSortAndRefreshListener {
+         // Callback for when the list needs to be sorted and refreshed.
         void onSortAndRefresh();
+
+
+         // Callback for when an item's importance is to be set.
+         // @param position The position of the item whose importance is to be set.
+         // @param importance The importance level to set.
+        void onItemImportanceSet(int position, Item.ImportanceLevel importance);
+
+         // Callback for when a new item is to be added.
+        void onItemAdd();
     }
 
-    // Instance of the listener that will be set by the activity or fragment
-    private OnSortAndRefreshListener sortAndRefreshListener;
+    // ItemActionListener encompasses all individual listeners into one.
+    // It allows us to notify the main activity (or any other listener) of different user actions on items.
+    private ItemActionListener itemActionListener;
 
-    // Set the listener that will be called when list needs to be sorted and refreshed.
-    public void setOnSortAndRefreshListener(OnSortAndRefreshListener listener) {
-        this.sortAndRefreshListener = listener;
+    // Set the listener for item-related actions.
+    public void setItemActionListener(ItemActionListener listener) {
+        this.itemActionListener = listener;
     }
 
     // Constructor for the adapter. It takes in a context and the list of items.
     public ItemAdapter(Context context, List<Item> items) {
         this.context = context;
-        this.items = items;
+        this.itemsList = new ArrayList<>(items);
+    }
+
+    // Common method to handle actions after importance is set.
+    private void handleImportanceAction(ItemViewHolder holder, Item.ImportanceLevel importanceLevel) {
+        int position = holder.getBindingAdapterPosition();
+
+        if (position != RecyclerView.NO_POSITION) {
+            Item currentItem = itemsList.get(position);
+
+            // Notify the listener to update the item's importance.
+            if (itemActionListener != null) {
+                itemActionListener.onItemImportanceSet(position, importanceLevel);
+            }
+
+            currentItem.setOptionsExpanded(false);
+
+            if (currentItem.isNewEntry()) {
+                currentItem.setNewEntry(false);
+                if (itemActionListener != null) {
+                    itemActionListener.onItemAdd();
+                }
+            }
+
+            // Update the visibility of UI buttons.
+            updateUIButtons(holder);
+
+            if (itemActionListener != null) {
+                itemActionListener.onSortAndRefresh();
+            }
+        }
+    }
+
+    private void updateUIButtons(ItemViewHolder holder) {
+        holder.importantButton.setVisibility(View.GONE);
+        holder.normalButton.setVisibility(View.GONE);
+        holder.unimportantButton.setVisibility(View.GONE);
+        holder.optionsButton.setVisibility(View.VISIBLE);
     }
 
     // This method is called when a new ViewHolder is needed. This happens when the RecyclerView is laid out.
@@ -76,69 +119,24 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     @Override
     public void onBindViewHolder(@NonNull ItemViewHolder holder, int position) {
         // Get the item from the list at the specified position.
-        Item item = items.get(position);
+        Item item = itemsList.get(position);
 
-        // Update the views inside the ViewHolder with the data from the item.
-        holder.editTextItem.setText(item.getText());
+        // Method in ItemViewHolder to manage UI aspects like showing importance buttons and setting
+        // background color of items based on importance
+        holder.bindData(item, position);
 
-        // Handle focusing on the new entry.
-        if(item.isNewEntry()) {
-            holder.editTextItem.requestFocus();
-
-            // Open the keyboard.
-            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) {
-                imm.showSoftInput(holder.editTextItem, InputMethodManager.SHOW_IMPLICIT);
-            }
-
-        }
-
-        // If the item has text, show the options and remove button.
-        if (!item.getText().isEmpty()) {
-            holder.optionsButton.setVisibility(View.VISIBLE);
-            holder.removeButton.setVisibility(View.VISIBLE);
-        } else {
-            holder.optionsButton.setVisibility(View.GONE);
-            holder.removeButton.setVisibility(View.GONE);
-        }
-
-        // Determine the visibility of the importance buttons based on options expansion status.
-        if (item.isOptionsExpanded()) {
-            holder.importantButton.setVisibility(View.VISIBLE);
-            holder.normalButton.setVisibility(View.VISIBLE);
-            holder.unimportantButton.setVisibility(View.VISIBLE);
-            holder.optionsButton.setVisibility(View.GONE);
-        } else {
-            holder.importantButton.setVisibility(View.GONE);
-            holder.normalButton.setVisibility(View.GONE);
-            holder.unimportantButton.setVisibility(View.GONE);
-        }
-
-        int colorRes; // This will store the color resource ID.
-
-        // Determine the color based on importance and position.
-        switch (item.getImportance()) {
-            case IMPORTANT:
-                colorRes = (position % 2 == 0) ? R.color.color_important_even : R.color.color_important_odd;
-                break;
-            case UNIMPORTANT:
-                colorRes = (position % 2 == 0) ? R.color.color_unimportant_even : R.color.color_unimportant_odd;
-                break;
-            case NORMAL:
-            default:
-                colorRes = (position % 2 == 0) ? R.color.color_normal_even : R.color.color_normal_odd;
-                break;
-        }
-
-        // Set the background color for the item.
-        holder.itemView.setBackgroundColor(ContextCompat.getColor(context, colorRes));
     }
 
     // This method returns the size of the dataset.
     // It tells the RecyclerView how many items are in the list.
     @Override
     public int getItemCount() {
-        return items.size();
+        return itemsList.size();
+    }
+
+    public void updateData(List<Item> newData) {
+        this.itemsList = newData;
+        notifyDataSetChanged();
     }
 
     // This is the ViewHolder class.
@@ -192,7 +190,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                         // Save the text to the Item object
                         int position = getBindingAdapterPosition();
                         if (position != RecyclerView.NO_POSITION) {
-                            items.get(position).setText(s.toString());
+                            itemsList.get(position).setText(s.toString());
                         }
 
                         // Show the importance buttons
@@ -213,10 +211,10 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                         // and it's not the last item in the list.
                         if (userTypedAtLeastOneChar) {
                             int position = getBindingAdapterPosition();
-                            if (position != RecyclerView.NO_POSITION && position < items.size() - 1) {
+                            if (position != RecyclerView.NO_POSITION && position < itemsList.size() - 1) {
                                 // Call the onItemRemove/removeItem method from MainActivity
-                                if (removalListener != null) {
-                                    removalListener.onItemRemove(position);
+                                if (itemActionListener != null) {
+                                    itemActionListener.onItemRemove(position);
                                 }
                             }
                         }
@@ -235,7 +233,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                 public void onClick(View v) {
                     int position = getBindingAdapterPosition();
                     if (position != RecyclerView.NO_POSITION) {
-                        Item item = items.get(position);
+                        Item item = itemsList.get(position);
                         // Toggle the options expansion status.
                         item.setOptionsExpanded(!item.isOptionsExpanded());
                         // Update the visibility directly
@@ -247,85 +245,82 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                 }
             });
 
-            // This code sets up a listener on the importantButton.
-            // Clicking important button will disappear all importance buttons, making visible
-            // options buttons instead.
             importantButton.setOnClickListener(v -> {
-                int position = getBindingAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    MainActivity mainActivity = (MainActivity) context;
-
-                    Item currentItem = items.get(position);
-
-                    // Set importance
-                    mainActivity.setItemImportance(position, Item.ImportanceLevel.IMPORTANT);
-                    items.get(position).setOptionsExpanded(false);
-
-                    if (currentItem.isNewEntry()) {
-                        // If it's a newly added item, add another new item
-                        currentItem.setNewEntry(false);  // Update it to false, as it's no longer a new entry
-                        mainActivity.addItem();
-                    }
-
-                    // Update UI buttons
-                    importantButton.setVisibility(View.GONE);
-                    normalButton.setVisibility(View.GONE);
-                    unimportantButton.setVisibility(View.GONE);
-                    optionsButton.setVisibility(View.VISIBLE);
-
-                    // Sort items after adding a new one.
-                    if (sortAndRefreshListener != null) {
-                        sortAndRefreshListener.onSortAndRefresh();
-                    }
-                }
+                // Update the importance to IMPORTANT.
+                handleImportanceAction(this, Item.ImportanceLevel.IMPORTANT);
             });
 
-            // Similar to important and unimportant buttons. The logic and comments are inside
-            // handleNormalAction() further down below
-            normalButton.setOnClickListener(v -> handleNormalAction());
+            normalButton.setOnClickListener(v -> {
+                // Update the importance to NORMAL.
+                handleImportanceAction(this, Item.ImportanceLevel.NORMAL);
+            });
 
-            // This code sets up a listener on the unimportantButton.
-            // Clicking unimportant button will disappear all importance buttons, making visible
-            // options buttons instead.
             unimportantButton.setOnClickListener(v -> {
-                int position = getBindingAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    MainActivity mainActivity = (MainActivity) context;
-
-                    Item currentItem = items.get(position);
-
-                    //  Set importance
-                    mainActivity.setItemImportance(position, Item.ImportanceLevel.UNIMPORTANT);
-                    items.get(position).setOptionsExpanded(false);
-
-                    if (currentItem.isNewEntry()) {
-                        // If it's a newly added item, add another new item
-                        currentItem.setNewEntry(false);  // Update it to false, as it's no longer a new entry
-                        mainActivity.addItem();
-                    }
-
-                    // Update UI buttons
-                    importantButton.setVisibility(View.GONE);
-                    normalButton.setVisibility(View.GONE);
-                    unimportantButton.setVisibility(View.GONE);
-                    optionsButton.setVisibility(View.VISIBLE);
-
-                    // Sort items after adding a new one.
-                    if (sortAndRefreshListener != null) {
-                        sortAndRefreshListener.onSortAndRefresh();
-                    }
-                }
+                // Update the importance to UNIMPORTANT.
+                handleImportanceAction(this, Item.ImportanceLevel.UNIMPORTANT);
             });
 
-            //  Sets listener on remove button
             removeButton.setOnClickListener(v -> {
                 int position = getBindingAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    MainActivity mainActivity = (MainActivity) context;
-                    mainActivity.removeItem(position);
+                if (position != RecyclerView.NO_POSITION && itemActionListener != null) {
+                    itemActionListener.onItemRemove(position);
                 }
             });
 
+        }
+
+        public void bindData(Item item, int position) {
+            editTextItem.setText(item.getText());
+
+            // 1. Handle focusing on the new entry.
+            if(item.isNewEntry()) {
+                editTextItem.requestFocus();
+
+                // Open the keyboard.
+                InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.showSoftInput(editTextItem, InputMethodManager.SHOW_IMPLICIT);
+                }
+            }
+
+            // 2. Handle visibility of optionsButton, removeButton, and importance buttons
+            if (!item.getText().isEmpty()) {
+                optionsButton.setVisibility(View.VISIBLE);
+                removeButton.setVisibility(View.VISIBLE);
+            } else {
+                optionsButton.setVisibility(View.GONE);
+                removeButton.setVisibility(View.GONE);
+            }
+
+            if (item.isOptionsExpanded()) {
+                importantButton.setVisibility(View.VISIBLE);
+                normalButton.setVisibility(View.VISIBLE);
+                unimportantButton.setVisibility(View.VISIBLE);
+                optionsButton.setVisibility(View.GONE);
+            } else {
+                importantButton.setVisibility(View.GONE);
+                normalButton.setVisibility(View.GONE);
+                unimportantButton.setVisibility(View.GONE);
+                optionsButton.setVisibility(item.getText().isEmpty() ? View.GONE : View.VISIBLE); // You may need this line to show the options button again when the importance is set and options are not expanded.
+            }
+
+            // 3. Handle importance color
+            int colorRes;
+            switch (item.getImportance()) {
+                case IMPORTANT:
+                    colorRes = (position % 2 == 0) ? R.color.color_important_even : R.color.color_important_odd;
+                    break;
+                case UNIMPORTANT:
+                    colorRes = (position % 2 == 0) ? R.color.color_unimportant_even : R.color.color_unimportant_odd;
+                    break;
+                case NORMAL:
+                default:
+                    colorRes = (position % 2 == 0) ? R.color.color_normal_even : R.color.color_normal_odd;
+                    break;
+            }
+            itemView.setBackgroundColor(ContextCompat.getColor(context, colorRes));
+
+            // You can continue to add other UI update logic here...
         }
 
         // This code defines logic for tapping normalButton and 'enter'.
@@ -337,25 +332,27 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
             // Check if the position is valid
             if (position != RecyclerView.NO_POSITION) {
-                // Get the instance of the MainActivity to access its methods
-                MainActivity mainActivity = (MainActivity) context;
 
                 // Fetch the current item being interacted with
-                Item currentItem = items.get(position);
+                Item currentItem = itemsList.get(position);
 
                 // Set the importance of the current item to NORMAL
-                mainActivity.setItemImportance(position, Item.ImportanceLevel.NORMAL);
+                if (itemActionListener != null) {
+                    itemActionListener.onItemImportanceSet(position, Item.ImportanceLevel.NORMAL);
+                }
 
                 // Collapse any expanded options for this item
-                items.get(position).setOptionsExpanded(false);
+                itemsList.get(position).setOptionsExpanded(false);
 
                 // Check if this item is a newly added entry
                 if (currentItem.isNewEntry()) {
                     // If it's a newly added item, we flag it as not new anymore
                     currentItem.setNewEntry(false);
 
-                    // Add another new item for the next entry
-                    mainActivity.addItem();
+                    // Notify the listener to add a new item
+                    if (itemActionListener != null) {
+                        itemActionListener.onItemAdd();
+                    }
                 }
 
                 // Update the visibility of UI buttons for the current item
@@ -368,8 +365,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                 optionsButton.setVisibility(View.VISIBLE);
 
                 // After the item's importance is set, sort the list
-                if (sortAndRefreshListener != null) {
-                    sortAndRefreshListener.onSortAndRefresh();
+                if (itemActionListener != null) {
+                    itemActionListener.onSortAndRefresh();
                 }
             }
         }
