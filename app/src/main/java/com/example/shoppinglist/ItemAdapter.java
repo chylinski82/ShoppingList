@@ -33,21 +33,16 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     // Define a unified interface to handle various item actions.
     // Implement this interface in the activity or fragment to listen to item-related events.
     public interface ItemActionListener {
-         // Callback for when an item is to be removed.
-         // @param position: The position of the item to be removed.
+        // Callback for when an item is to be removed.
+        // @param position: The position of the item to be removed.
         void onItemRemove(int position);
 
+        // Callback for when an item's importance is to be set.
+        // @param position The position of the item whose importance is to be set.
+        // @param importance The importance level to set.
+        void onItemImportanceChange(int position, Item.ImportanceLevel importance);
 
-         // Callback for when the list needs to be sorted and refreshed.
-        void onSortAndRefresh();
-
-
-         // Callback for when an item's importance is to be set.
-         // @param position The position of the item whose importance is to be set.
-         // @param importance The importance level to set.
-        void onItemImportanceSet(int position, Item.ImportanceLevel importance);
-
-         // Callback for when a new item is to be added.
+        // Callback for when a new item is to be added.
         void onItemAdd();
     }
 
@@ -66,64 +61,28 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         this.itemsList = new ArrayList<>(items);
     }
 
-     // This method centralizes the logic when an item's importance is set, either through user interaction
-     // with the importance buttons or when 'enter' is pressed (which sets it to NORMAL)
-     // @param holder The ViewHolder associated with the item.
-     // @param importanceLevel The importance level to set for the item.
+    // This method centralizes the logic when an item's importance is set, either through user interaction
+    // with the importance buttons or when 'enter' is pressed (which sets it to NORMAL)
+    // @param holder The ViewHolder associated with the item.
+    // @param importanceLevel The importance level to set for the item.
     private void handleItemAction(ItemViewHolder holder, Item.ImportanceLevel importanceLevel) {
-
-        // Retrieve the adapter position of the current ViewHolder.
-        // This helps us fetch the corresponding item from the items list.
         int position = holder.getBindingAdapterPosition();
-
-        // Check if the position is valid. It can be invalid under certain circumstances,
-        // such as when an item is being removed or when the RecyclerView is updating.
         if (position != RecyclerView.NO_POSITION) {
-            // Get the item corresponding to the current position.
             Item currentItem = itemsList.get(position);
 
-            // If an itemActionListener has been set (it's an interface to notify the parent activity or fragment),
-            // notify that the importance of the item has been set.
-            if (itemActionListener != null) {
-                itemActionListener.onItemImportanceSet(position, importanceLevel);
-            }
-
-            // This flag determines whether the importance buttons are visible or not.
-            currentItem.setOptionsExpanded(false);
-
-            // Check if the current item is a new entry.
+            currentItem.setOptionsExpanded(false); // UI update
             if (currentItem.isNewEntry()) {
-                // Set the new entry flag to false, since the user has now interacted with it.
-                currentItem.setNewEntry(false);
-
-                // If an itemActionListener has been set, notify that a new item has been added.
+                currentItem.setNewEntry(false); // UI update
                 if (itemActionListener != null) {
                     itemActionListener.onItemAdd();
                 }
             }
 
-            // Update the UI to reflect the changes, like hiding the importance buttons
-            // and showing the options button.
-            updateUIButtons(holder, importanceLevel);
-
-            // If an itemActionListener has been set, notify to sort and refresh the list.
-            // This could mean reordering the items based on their importance and updating the UI.
+            // Business logic handled by ViewModel via interface
             if (itemActionListener != null) {
-                itemActionListener.onSortAndRefresh();
+                itemActionListener.onItemImportanceChange(position, importanceLevel);
             }
         }
-    }
-
-    private void updateUIButtons(ItemViewHolder holder, Item.ImportanceLevel importanceLevel) {
-        // Always hide the importance buttons
-        holder.importantButton.setVisibility(View.GONE);
-        holder.normalButton.setVisibility(View.GONE);
-        holder.unimportantButton.setVisibility(View.GONE);
-
-        // Always show options button
-        holder.optionsButton.setVisibility(View.VISIBLE);
-
-        // Note: Additional UI changes based on importance can be added if necessary
     }
 
     // This method is called when a new ViewHolder is needed. This happens when the RecyclerView is laid out.
@@ -204,8 +163,10 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                             // Remove the newline
                             editTextItem.setText(s.subSequence(0, s.length() - 1));
                             editTextItem.setSelection(s.length() - 1); // Set the cursor to the end
-
-                            handleNormalAction();
+                            int position = getBindingAdapterPosition();
+                            if (position != RecyclerView.NO_POSITION) {
+                                itemActionListener.onItemImportanceChange(position, Item.ImportanceLevel.NORMAL);
+                            }
 
                             return; // Exit early, the other checks below are not necessary.
                         }
@@ -270,13 +231,57 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
             // For handling importance actions
             importantButton.setOnClickListener(v -> {
-                handleItemAction(this, Item.ImportanceLevel.IMPORTANT);
+                int position = getBindingAdapterPosition();
+
+                if (itemActionListener != null && position != RecyclerView.NO_POSITION) {
+                    Item currentItem = itemsList.get(position);
+
+                    // UI updates
+                    currentItem.setOptionsExpanded(false);
+                    notifyItemChanged(position);  // This will invoke `bindData` again to reflect the changes
+
+                    // Inform the ViewModel to update the data
+                    itemActionListener.onItemImportanceChange(position, Item.ImportanceLevel.IMPORTANT);
+                    if (currentItem.isNewEntry()) {
+                        itemActionListener.onItemAdd();
+                    }
+                }
             });
+
             normalButton.setOnClickListener(v -> {
-                handleItemAction(this, Item.ImportanceLevel.NORMAL);
+                int position = getBindingAdapterPosition();
+
+                if (itemActionListener != null && position != RecyclerView.NO_POSITION) {
+                    Item currentItem = itemsList.get(position);
+
+                    // UI updates
+                    currentItem.setOptionsExpanded(false);
+                    notifyItemChanged(position);  // This will invoke `bindData` again to reflect the changes
+
+                    // Inform the ViewModel to update the data
+                    itemActionListener.onItemImportanceChange(position, Item.ImportanceLevel.NORMAL);
+                    if (currentItem.isNewEntry()) {
+                        itemActionListener.onItemAdd();
+                    }
+                }
             });
+
             unimportantButton.setOnClickListener(v -> {
-                handleItemAction(this, Item.ImportanceLevel.UNIMPORTANT);
+                int position = getBindingAdapterPosition();
+
+                if (itemActionListener != null && position != RecyclerView.NO_POSITION) {
+                    Item currentItem = itemsList.get(position);
+
+                    // UI updates
+                    currentItem.setOptionsExpanded(false);
+                    notifyItemChanged(position);  // This will invoke `bindData` again to reflect the changes
+
+                    // Inform the ViewModel to update the data
+                    itemActionListener.onItemImportanceChange(position, Item.ImportanceLevel.UNIMPORTANT);
+                    if (currentItem.isNewEntry()) {
+                        itemActionListener.onItemAdd();
+                    }
+                }
             });
 
             removeButton.setOnClickListener(v -> {
@@ -342,9 +347,5 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             // You can continue to add other UI update logic here...
         }
 
-        // For handling normal actions (when 'enter' is pressed)
-        private void handleNormalAction() {
-            handleItemAction(this, Item.ImportanceLevel.NORMAL);
-        }
     }
 }

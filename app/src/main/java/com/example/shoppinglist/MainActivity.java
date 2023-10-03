@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.ItemA
 
         // TODO: Initialize your data or load it from a source if needed
         // For now, adding a blank item as a starting point:
-            // Check if activity is freshly created or recreated after configuration change.
+        // Check if activity is freshly created or recreated after configuration change.
         if (savedInstanceState == null) {
             itemsViewModel.addItem();  // Using ViewModel's addItem method
         }
@@ -64,16 +64,8 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.ItemA
     }
 
     @Override
-    // Callback method triggered when the list is set to be sorted via the adapter's interface.
-    // Delegates the actual sorting logic to the sortAndRefreshList method.
-    public void onSortAndRefresh() {
-        itemsViewModel.sortAndRefreshList(); // Using ViewModel's sortAndRefreshList method
-        itemAdapter.notifyDataSetChanged();
-    }
-
-    @Override
-    public void onItemImportanceSet(int position, Item.ImportanceLevel importance) {
-        itemsViewModel.setItemImportance(position, importance);
+    public void onItemImportanceChange(int position, Item.ImportanceLevel importance) {
+        itemsViewModel.handleItemImportanceChange(position, importance);
         itemAdapter.notifyItemChanged(position);
     }
 

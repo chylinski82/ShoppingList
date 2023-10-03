@@ -36,6 +36,7 @@ public class ItemsViewModel extends ViewModel {
         List<Item> currentList = getItemList();
         currentList.add(item);
         itemListLiveData.setValue(currentList); // Updating the MutableLiveData
+
     }
 
     // Method to remove an item from a specific position
@@ -47,13 +48,21 @@ public class ItemsViewModel extends ViewModel {
         }
     }
 
-    // Method to set the importance level for an item
-    public void setItemImportance(int position, Item.ImportanceLevel importance) {
-        List<Item> currentList = getItemList();
-        if (position >= 0 && position < currentList.size()) {
-            Item currentItem = currentList.get(position);
+    public void handleItemImportanceChange(int position, Item.ImportanceLevel importance) {
+        List<Item> currentItems = itemListLiveData.getValue();
+        if (currentItems != null && position >= 0 && position < currentItems.size()) {
+            Item currentItem = currentItems.get(position);
+
+            // Handle new entry:
+            if (currentItem.isNewEntry()) {
+                currentItem.setNewEntry(false);
+                addItem();  // Assuming the addItem() method adds to itemListLiveData.
+            }
+
+            // Set importance:
             currentItem.setImportance(importance);
-            itemListLiveData.setValue(currentList); // Update the MutableLiveData after modification
+
+            sortAndRefreshList();
         }
     }
 
@@ -70,4 +79,5 @@ public class ItemsViewModel extends ViewModel {
         });
         itemListLiveData.setValue(currentList); // Updating the MutableLiveData
     }
+
 }
