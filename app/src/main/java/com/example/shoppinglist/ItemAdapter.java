@@ -61,30 +61,6 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         this.itemsList = new ArrayList<>(items);
     }
 
-    // This method centralizes the logic when an item's importance is set, either through user interaction
-    // with the importance buttons or when 'enter' is pressed (which sets it to NORMAL)
-    // @param holder The ViewHolder associated with the item.
-    // @param importanceLevel The importance level to set for the item.
-    private void handleItemAction(ItemViewHolder holder, Item.ImportanceLevel importanceLevel) {
-        int position = holder.getBindingAdapterPosition();
-        if (position != RecyclerView.NO_POSITION) {
-            Item currentItem = itemsList.get(position);
-
-            currentItem.setOptionsExpanded(false); // UI update
-            if (currentItem.isNewEntry()) {
-                currentItem.setNewEntry(false); // UI update
-                if (itemActionListener != null) {
-                    itemActionListener.onItemAdd();
-                }
-            }
-
-            // Business logic handled by ViewModel via interface
-            if (itemActionListener != null) {
-                itemActionListener.onItemImportanceChange(position, importanceLevel);
-            }
-        }
-    }
-
     // This method is called when a new ViewHolder is needed. This happens when the RecyclerView is laid out.
     // The created ViewHolder will be used to display items of the adapter using onBindViewHolder.
     @NonNull
@@ -217,14 +193,10 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                 public void onClick(View v) {
                     int position = getBindingAdapterPosition();
                     if (position != RecyclerView.NO_POSITION) {
-                        Item item = itemsList.get(position);
-                        // Toggle the options expansion status.
-                        item.setOptionsExpanded(!item.isOptionsExpanded());
-                        // Update the visibility directly
-                        optionsButton.setVisibility(View.GONE);
-                        importantButton.setVisibility(View.VISIBLE);
-                        normalButton.setVisibility(View.VISIBLE);
-                        unimportantButton.setVisibility(View.VISIBLE);
+                        Item currentItem = itemsList.get(position);
+                        // UI updates
+                        currentItem.setOptionsExpanded(true);
+                        notifyItemChanged(position);  // This will invoke `bindData` again to reflect the changes
                     }
                 }
             });

@@ -22,6 +22,10 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.ItemA
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Find the RecyclerView in the layout
+        // Reference to the RecyclerView UI component
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+
         // Initialize the ViewModel
         itemsViewModel = new ViewModelProvider(this).get(ItemsViewModel.class);
         //  Observe the MutableLiveData
@@ -30,9 +34,13 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.ItemA
             itemAdapter.updateData(updatedList);
         });
 
-        // Find the RecyclerView in the layout
-        // Reference to the RecyclerView UI component
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        itemsViewModel.getScrollToBottom().observe(this, shouldScroll -> {
+            if (shouldScroll) {
+                int lastItemPosition = itemAdapter.getItemCount() - 1;
+                recyclerView.getLayoutManager().scrollToPosition(lastItemPosition);
+                itemsViewModel.resetScrollToBottomFlag(); // Reset the flag after scrolling
+            }
+        });
 
         // Setting up RecyclerView with a linear layout manager
         // The LayoutManager dictates the manner in which items are arranged on the screen

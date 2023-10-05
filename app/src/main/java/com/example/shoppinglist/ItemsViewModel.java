@@ -1,5 +1,6 @@
 package com.example.shoppinglist;
 
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import java.util.ArrayList;
@@ -12,10 +13,28 @@ public class ItemsViewModel extends ViewModel {
     // Any changes to this list will reflect across components that have a reference to this list.
     // ...then... Changed itemList to MutableLiveData to enable observing its changes
     private final MutableLiveData<List<Item>> itemListLiveData = new MutableLiveData<>(new ArrayList<>());
-
     // Getter method for the MutableLiveData
     public MutableLiveData<List<Item>> getItemListLiveData() {
         return itemListLiveData;
+    }
+
+    // LiveData to signal if the UI should scroll to the bottom (default is 'false').
+    // it will be 'true' only after adding new item
+    private final MutableLiveData<Boolean> scrollToBottom = new MutableLiveData<>(false);
+
+    // Provides read-only access to 'scrollToBottom' LiveData for UI observers.
+    public LiveData<Boolean> getScrollToBottom() {
+        return scrollToBottom;
+    }
+
+    // Signals the UI to scroll to the bottom.
+    public void triggerScrollToBottom() {
+        scrollToBottom.setValue(true);
+    }
+
+    // Resets the scroll-to-bottom signal to 'false'.
+    public void resetScrollToBottomFlag() {
+        scrollToBottom.setValue(false);
     }
 
     // Method to retrieve the current list of items.
@@ -36,7 +55,7 @@ public class ItemsViewModel extends ViewModel {
         List<Item> currentList = getItemList();
         currentList.add(item);
         itemListLiveData.setValue(currentList); // Updating the MutableLiveData
-
+        triggerScrollToBottom();  // Updating the MutableLiveData (view will scroll to bottom)
     }
 
     // Method to remove an item from a specific position
