@@ -1,22 +1,16 @@
+// Package declaration.
 package com.example.shoppinglist;
 
+// Represents a single shopping list item in the application.
+// This class serves as the model in the MVVM architecture, containing data and state related to each item.
 public class Item {
-    private long id; // A unique identifier for each item, useful for differentiating items in the list.
-    private String text;  // Represents the content or description of the shopping item (EditText view).
+    private long id; // Unique identifier for each item.
+    private String text;  // Content/description of the shopping item.
+    private boolean isOptionsExpanded; // State of item's options visibility.
+    private boolean isNewEntry; // Flag indicating if the item is newly created.
+    private ImportanceLevel importance;  // Enum indicating the priority of the item.
 
-    // Indicates if the item's options (e.g., edit, delete) are currently displayed.
-    // This might be used by the adapter to decide how to display the item in the RecyclerView.
-    private boolean isOptionsExpanded;
-
-    // Flag to identify if this is a newly created item. This could help in providing
-    // certain UI indications or behaviors for new entries.
-    private boolean isNewEntry;
-
-    // Indicates the priority or significance of the item.
-    // The adapter might use this to vary the display of items based on their importance.
-    private ImportanceLevel importance;  // Importance level.
-
-    // Primary constructor for creating a new item with specified parameters.
+    // Constructor to initialize an item with its essential properties.
     public Item(long id, String text, boolean isNewEntry) {
         this.id = id;
         this.text = text;
@@ -25,13 +19,12 @@ public class Item {
         this.importance = ImportanceLevel.NORMAL;
     }
 
-    // Overloaded constructor: For convenience,
-    // when creating an item without specifying its 'newEntry' status.
+    // Overloaded constructor for creating an item with default 'newEntry' status.
     public Item(long id, String text) {
-        this(id, text, true);  // By default, a new item will be marked as a new entry
+        this(id, text, true);  // Default to new entry.
     }
 
-    // Standard getters and setters for the Item properties.
+    // Standard getters and setters.
     public long getId() {
         return id;
     }
@@ -63,7 +56,7 @@ public class Item {
         this.importance = importance;
     }
 
-    // Enum to represent the various levels of importance an item can have.
+    // Enum representing importance levels for a shopping item.
     public enum ImportanceLevel {
         IMPORTANT, NORMAL, UNIMPORTANT
     }

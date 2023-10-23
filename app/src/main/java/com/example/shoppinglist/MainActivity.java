@@ -1,20 +1,21 @@
 package com.example.shoppinglist;
 
 import android.os.Bundle;
-import android.util.Log;
-
+import android.widget.ImageButton;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.ItemTouchHelper;
 
+// The main activity for the app. Implements the ItemAdapter.ItemActionListener to handle user interactions with list items.
 public class MainActivity extends AppCompatActivity implements ItemAdapter.ItemActionListener {
 
-    // Adapter bridges the data and the RecyclerView,
-    // determining how each individual item should be displayed.
+    // Adapter to manage and display list items.
     private ItemAdapter itemAdapter;
 
-    // Declare the ViewModel to hold our items list
+    // ViewModel to manage the data and business logic for the app.
     private ItemsViewModel itemsViewModel;
 
     @Override
@@ -22,64 +23,101 @@ public class MainActivity extends AppCompatActivity implements ItemAdapter.ItemA
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Find the RecyclerView in the layout
-        // Reference to the RecyclerView UI component
+        // Set up the undo button to revert the last action.
+        ImageButton undoButton = findViewById(R.id.undoButton);
+        undoButton.setOnClickListener(v -> itemsViewModel.undo());
+
+        // Initialize the RecyclerView to display the list items.
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
-        // Initialize the ViewModel
+        // Instantiate the ViewModel.
         itemsViewModel = new ViewModelProvider(this).get(ItemsViewModel.class);
-        //  Observe the MutableLiveData
+
+        // Observe changes to the items list. If there's a change, update the RecyclerView's data.
         itemsViewModel.getItemListLiveData().observe(this, updatedList -> {
-            // When the observed data changes, update the adapter's data and notify it
-            itemAdapter.updateData(updatedList);
+            if (recyclerView.isComputingLayout()) {
+                recyclerView.post(() -> itemAdapter.updateData(updatedList));
+            } else {
+                itemAdapter.updateData(updatedList);
+            }
         });
 
+        // Observe the flag for scrolling to the bottom of the list. If set, scroll to the last item.
         itemsViewModel.getScrollToBottom().observe(this, shouldScroll -> {
             if (shouldScroll) {
                 int lastItemPosition = itemAdapter.getItemCount() - 1;
                 recyclerView.getLayoutManager().scrollToPosition(lastItemPosition);
-                itemsViewModel.resetScrollToBottomFlag(); // Reset the flag after scrolling
+                itemsViewModel.resetScrollToBottomFlag();
             }
         });
 
-        // Setting up RecyclerView with a linear layout manager
-        // The LayoutManager dictates the manner in which items are arranged on the screen
-        // Here, we use LinearLayoutManager which arranges items in a vertical list
+        // Set the layout manager and adapter for the RecyclerView.
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        // Setup the RecyclerView with an adapter
-        // Instead of using the local itemList, now we retrieve it from the ViewModel
         itemAdapter = new ItemAdapter(this, itemsViewModel.getItemList());
-        // Set the listeners for the adapter
-        itemAdapter.setItemActionListener(this); // 'this' because MainActivity implements the listener.
+        itemAdapter.setItemActionListener(this);
         recyclerView.setAdapter(itemAdapter);
 
-        // TODO: Initialize your data or load it from a source if needed
-        // For now, adding a blank item as a starting point:
-        // Check if activity is freshly created or recreated after configuration change.
+        // Enable swipe gestures on items. Swiping left or right removes the item.
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getBindingAdapterPosition();
+                if (direction == ItemTouchHelper.LEFT || direction == ItemTouchHelper.RIGHT) {
+                    itemsViewModel.removeItem(position);
+                }
+            }
+
+            @Override
+            public int getSwipeDirs(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+                // Prevent swiping for new entries.
+                int position = viewHolder.getBindingAdapterPosition();
+                ItemAdapter adapter = (ItemAdapter) recyclerView.getAdapter();
+                if (adapter != null) {
+                    Item currentItem = adapter.getItemAt(position);
+                    if (currentItem.isNewEntry()) {
+                        return 0;
+                    }
+                }
+                return super.getSwipeDirs(recyclerView, viewHolder);
+            }
+        };
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+
+        // If the activity is being created for the first time (not a configuration change), add a new item.
         if (savedInstanceState == null) {
-            itemsViewModel.addItem();  // Using ViewModel's addItem method
+            itemsViewModel.addItem();
         }
     }
 
+    // Implementation of the ItemActionListener interface methods. These methods serve as a bridge
+    // between user interactions in the UI (via the adapter) and the underlying business logic/data processing
+    // (via the ViewModel). By delegating these actions to the ViewModel, the activity adheres to the
+    // MVVM (Model-View-ViewModel) design pattern, ensuring a separation of concerns and
+    // enhancing maintainability and testability.
+
     @Override
     public void onItemRemove(int position) {
-        // Callback method triggered when an item is set to be removed via the adapter's interface.
-        // Delegates the actual removal logic to the removeItem method.
-        itemsViewModel.removeItem(position); // Using ViewModel's removeItem method
-        itemAdapter.notifyItemRemoved(position);
-        itemAdapter.notifyItemRangeChanged(position, itemsViewModel.getItemList().size() - position);
+        itemsViewModel.removeItem(position);
     }
 
     @Override
     public void onItemImportanceChange(int position, Item.ImportanceLevel importance) {
         itemsViewModel.handleItemImportanceChange(position, importance);
-        itemAdapter.notifyItemChanged(position);
     }
 
     @Override
-    public void onItemAdd() {
-        itemsViewModel.addItem();
-        itemAdapter.notifyItemInserted(itemsViewModel.getItemList().size() - 1);
+    public void onSetItemOptionsExpanded(int position, boolean expanded) {
+        itemsViewModel.setItemOptionsExpanded(position, expanded);
+    }
+
+    @Override
+    public void onItemTextChanged(Item item, String originalText) {
+        itemsViewModel.handleItemTextChanged(item, originalText);
     }
 }

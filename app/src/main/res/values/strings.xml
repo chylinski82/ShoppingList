@@ -5,5 +5,5 @@
     <string name="important_button">Important button</string>
     <string name="normal_button">Normal button</string>
     <string name="unimportant_button">Unimportant button</string>
-    <string name="remove_button">Remove button</string>
+    <string name="the_shopping_list">Shopping List</string>
 </resources>
