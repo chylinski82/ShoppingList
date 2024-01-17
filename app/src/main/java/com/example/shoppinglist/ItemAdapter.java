@@ -11,6 +11,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -65,6 +66,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     @Override
     public void onBindViewHolder(@NonNull ItemViewHolder holder, int position) {
         Item item = itemsList.get(position);
+        Log.d("ItemAdapter", "Binding item at position: " + position + " with ID: " + item.getId() + " and content: " + item.getText());
         holder.bindData(item, position);
     }
 
@@ -82,7 +84,10 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
     // Helper method to fetch an item from the list based on its position.
     public Item getItemAt(int position) {
-        return itemsList.get(position);
+        if (position >= 0 && position < itemsList.size()) {
+            return itemsList.get(position);
+        }
+        return null; // Or handle this case as needed
     }
 
     // ViewHolder class that defines the view elements of each list item.
@@ -103,6 +108,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             // Binding the views to their respective elements in the item layout.
             editTextItem = itemView.findViewById(R.id.editTextItem);
             optionsButton = itemView.findViewById(R.id.optionsButton);
+            importantButton = itemView.findViewById(R.id.importantButton);
             normalButton = itemView.findViewById(R.id.normalButton);
             unimportantButton = itemView.findViewById(R.id.unimportantButton);
 
@@ -118,6 +124,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     // Fetching the adapter position.
                     int position = getBindingAdapterPosition();
+                    Log.d("ItemAdapter", "Text changed in position: " + position + ", Text: " + s);
                     if (position != RecyclerView.NO_POSITION) {
                         Item currentItem = itemsList.get(position);
                         if (s.length() > 0) {
@@ -185,6 +192,13 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
             // Listeners for importance buttons.
             // These listeners collapse the options and set the importance level as specified.
+            importantButton.setOnClickListener(v -> {
+                int position = getBindingAdapterPosition();
+                if (itemActionListener != null && position != RecyclerView.NO_POSITION) {
+                    itemActionListener.onSetItemOptionsExpanded(position, false);
+                    itemActionListener.onItemImportanceChange(position, Item.ImportanceLevel.IMPORTANT);
+                }
+            });
             normalButton.setOnClickListener(v -> {
                 int position = getBindingAdapterPosition();
                 if (itemActionListener != null && position != RecyclerView.NO_POSITION) {
@@ -216,10 +230,12 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
             // Toggle visibility of option buttons based on whether options are expanded.
             if (item.isOptionsExpanded()) {
+                importantButton.setVisibility(View.VISIBLE);
                 normalButton.setVisibility(View.VISIBLE);
                 unimportantButton.setVisibility(View.VISIBLE);
                 optionsButton.setVisibility(View.GONE);
             } else {
+                importantButton.setVisibility(View.GONE);
                 normalButton.setVisibility(View.GONE);
                 unimportantButton.setVisibility(View.GONE);
                 // Hide options button if text is empty, otherwise show it.
